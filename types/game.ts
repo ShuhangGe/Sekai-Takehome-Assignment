@@ -1,0 +1,209 @@
+// Game scenario types
+export interface GameScenario {
+  "Dnd-Scenario": string;
+  attributes: Record<string, string>;
+  baseSkills: Record<string, BaseSkill>;
+  startingPoint: string;
+  playerCustomizations: Record<string, PlayerCustomization>;
+}
+
+export interface BaseSkill {
+  attribute: string;
+  description: string;
+}
+
+export interface PlayerCustomization {
+  description: string;
+  content: Record<string, CustomizationOption>;
+}
+
+export interface CustomizationOption {
+  description: string;
+  attributeBonus: Record<string, number>;
+}
+
+// Player types
+export interface Player {
+  id: string;
+  username: string;
+  attributes: Record<string, number>;
+  skills: Record<string, number>;
+  customizations: Record<string, string>;
+}
+
+// Game state types
+export interface GameState {
+  id: string;
+  scenarioName: string;
+  player: Player;
+  history: GameMessage[];
+  currentTurn: number;
+  isEnded: boolean;
+}
+
+export interface GameMessage {
+  id: string;
+  role: 'ai' | 'player';
+  content: string;
+  timestamp: number;
+}
+
+// Templates from appendix
+export const gameTemplates: Record<string, GameScenario> = {
+  "asian-parent": {
+    "Dnd-Scenario": "Raising Your Asian Child (Helicopter Parent Edition)",
+    "attributes": {
+      "Academic Pressure": "Your ability to push for educational excellence. Determines effectiveness in enforcing study habits, test preparation, and grade expectations.",
+      "Tiger Discipline": "Your strictness and enforcement of rules. Essential for maintaining rigid schedules, proper behavior, and high standards in all aspects of life.",
+      "Social Engineering": "Your skill at controlling your child's social environment. Crucial for managing friendships, extracurricular activities, and building the perfect college application.",
+      "Family Honor": "Your commitment to upholding cultural traditions and family reputation. Affects how well your child represents the family and respects ancestral values.",
+      "Resource Management": "Your ability to optimize time, money, and connections. Determines how effectively you can provide advantages like tutoring, lessons, and networking opportunities.",
+      "Emotional Tactics": "Your skill at psychological motivation techniques. Influences how you leverage guilt, comparison, and conditional approval to ensure compliance."
+    },
+    "baseSkills": {
+      "Test Prep Drilling": {"attribute": "Academic Pressure", "description": "Conducting intensive study sessions and practice tests to ensure top scores on every examination."},
+      "Grade Negotiation": {"attribute": "Academic Pressure", "description": "Confronting teachers about marks and assignments, ensuring your child receives every possible point."},
+      "Strict Scheduling": {"attribute": "Tiger Discipline", "description": "Creating and enforcing a regimented timetable with minimal free time to maximize productivity."},
+      "Punishment System": {"attribute": "Tiger Discipline", "description": "Implementing appropriate consequences for any performance below expectations or rule violations."},
+      "Playdate Vetting": {"attribute": "Social Engineering", "description": "Carefully selecting acceptable friends based on their academic performance and parental occupation."},
+      "Activity Monitoring": {"attribute": "Social Engineering", "description": "Maintaining surveillance on all social interactions and swiftly intervening when necessary."},
+      "Relative Comparison": {"attribute": "Family Honor", "description": "Motivating your child through direct comparisons to cousins and other family members' achievements."},
+      "Cultural Tradition Enforcement": {"attribute": "Family Honor", "description": "Ensuring rigorous participation in cultural practices, language learning, and family obligations."},
+      "Educational Investment": {"attribute": "Resource Management", "description": "Allocating financial resources to the optimal combination of schools, programs, and educational materials."},
+      "Schedule Optimization": {"attribute": "Resource Management", "description": "Maximizing each day's productive hours through careful planning and elimination of time-wasting activities."},
+      "Guilt Induction": {"attribute": "Emotional Tactics", "description": "Reminding your child of family sacrifices made for their benefit to motivate greater effort and performance."},
+      "Conditional Approval": {"attribute": "Emotional Tactics", "description": "Strategically providing love and praise only when expectations are met or exceeded."}
+    },
+    "startingPoint": "First Parent-Teacher Conference of the School Year",
+    "playerCustomizations": {
+      "parentingStyle": {
+        "description": "Choose your helicopter parenting specialization",
+        "content": {
+          "Academic Taskmaster": {
+            "description": "You are singularly focused on grades, test scores, and academic rankings. Nothing matters more than perfect report cards and admission to elite universities.",
+            "attributeBonus": {"Academic Pressure": 2, "Emotional Tactics": 1}
+          },
+          "Prestige Climber": {
+            "description": "You obsessively collect status symbols and connections. Every activity must enhance your child's resume and your family's standing in the community.",
+            "attributeBonus": {"Social Engineering": 2, "Resource Management": 1}
+          },
+          "Cultural Purist": {
+            "description": "You emphasize cultural heritage above all else. Your child must be fluent in your native language, respect traditions, and never become 'too Westernized.'",
+            "attributeBonus": {"Family Honor": 2, "Tiger Discipline": 1}
+          },
+          "Future Planner": {
+            "description": "You've mapped out your child's entire life through retirement. Every decision from elementary school to career choice has already been determined.",
+            "attributeBonus": {"Resource Management": 2, "Academic Pressure": 1}
+          },
+          "Talent Maximizer": {
+            "description": "You're determined that your child will master multiple skills to perfection. Piano, violin, competitive math, and Olympic swimming are just the beginning.",
+            "attributeBonus": {"Tiger Discipline": 2, "Social Engineering": 1}
+          }
+        }
+      },
+      "familyBackground": {
+        "description": "Choose your family's background and values",
+        "content": {
+          "Traditional Immigrant": {
+            "description": "First-generation immigrant who sacrificed everything for a better life. Your child must achieve success to justify the hardships you endured.",
+            "attributeBonus": {"Family Honor": 2, "Emotional Tactics": 1}
+          },
+          "Elite Professional": {
+            "description": "Doctor, lawyer, or engineer with prestigious credentials. Your child must meet or exceed your professional success to maintain family standards.",
+            "attributeBonus": {"Academic Pressure": 2, "Resource Management": 1}
+          },
+          "Academic Legacy": {
+            "description": "Family with generations of scholarly achievement and elite university attendance. Anything less than continuing this tradition is unthinkable.",
+            "attributeBonus": {"Family Honor": 1, "Academic Pressure": 2}
+          },
+          "Entrepreneurial Success": {
+            "description": "Self-made business achiever who built success through relentless hard work. Your child must demonstrate similar drive and results-oriented thinking.",
+            "attributeBonus": {"Tiger Discipline": 2, "Resource Management": 1}
+          },
+          "Competitive Community": {
+            "description": "Living in an area where all parents are intensely involved and comparing children. Your parenting is constantly observed and judged by peers.",
+            "attributeBonus": {"Social Engineering": 2, "Emotional Tactics": 1}
+          }
+        }
+      }
+    }
+  },
+  "trump-advisor": {
+    "Dnd-Scenario": "White House Chaos: Trump's Advisor",
+    "attributes": {
+      "Spin": "Ability to manipulate information, craft alternative narratives, and control public perception during scandals and controversies.",
+      "Patience": "Mental fortitude to endure presidential tantrums, 3AM tweet storms, and absurd demands without having a nervous breakdown.",
+      "Cunning": "Political savvy to navigate Washington power games, outsmart rivals, and implement your agenda while no one's looking.",
+      "Flattery": "Skill at ego management, delivering perfectly-timed compliments, and maintaining favor with the narcissist-in-chief.",
+      "Crisis Management": "Talent for handling emergencies, from nuclear threats to covfefe tweets, often simultaneously and with minimal preparation.",
+      "Media Savvy": "Understanding of press dynamics, social media algorithms, and how to turn 'fake news' accusations to your advantage."
+    },
+    "baseSkills": {
+      "Alternative Facts": {"attribute": "Spin", "description": "Create believable falsehoods or reshape reality to serve the administration's narrative and distract from actual problems."},
+      "Damage Control": {"attribute": "Spin", "description": "Minimize fallout from presidential gaffes, scandals, or 3AM tweets that threatened nuclear war or crashed the stock market."},
+      "Tantrum Management": {"attribute": "Patience", "description": "Calm presidential rage episodes by offering Diet Coke, compliments, or a new enemy to focus on."},
+      "Sleep Deprivation": {"attribute": "Patience", "description": "Function effectively despite being awakened at all hours for urgent matters like bad TV coverage or burger cravings."},
+      "Bureaucratic Maneuvering": {"attribute": "Cunning", "description": "Navigate complex White House power dynamics and ensure your rivals get blamed for failures while you claim credit for successes."},
+      "Leak Prevention": {"attribute": "Cunning", "description": "Keep embarrassing information from reaching the press or identify which colleague to frame when leaks inevitably happen."},
+      "Ego Massage": {"attribute": "Flattery", "description": "Provide validation and praise to maintain presidential confidence and secure your position in the inner circle."},
+      "Loyalty Signaling": {"attribute": "Flattery", "description": "Demonstrate unwavering support publicly, even when defending policies that contradict statements from 10 minutes ago."},
+      "Distraction Creation": {"attribute": "Crisis Management", "description": "Generate new outrageous headlines to divert attention from ongoing scandals, investigations, or policy failures."},
+      "Nuclear De-escalation": {"attribute": "Crisis Management", "description": "Talk the president down from extreme military options by appealing to ratings, legacy concerns, or golf schedule conflicts."},
+      "Twitter Translation": {"attribute": "Media Savvy", "description": "Interpret and explain presidential social media outbursts to confused allies, enemies, and markets without revealing your own confusion."},
+      "Press Wrangling": {"attribute": "Media Savvy", "description": "Manage hostile reporters, dodge questions, and turn briefings into propaganda opportunities regardless of the day's chaos."}
+    },
+    "startingPoint": "Your first day in the chaotic White House. The President just fired your predecessor via tweet while you were being security-screened. He's already called you by three different names and asked if you can 'do something about those tariff people.' Intelligence briefings are piling up unread, and CNN is reporting a possible missile test in North Korea. The President wants McDonald's for lunch and someone to explain why his approval rating isn't 100%.",
+    "playerCustomizations": {
+      "role": {
+        "description": "Choose your role in the Trump administration",
+        "content": {
+          "Chief of Staff": {
+            "description": "The organizational mastermind attempting to create order from chaos. You control the President's schedule, access to information, and which advisors he talks to (in theory).",
+            "attributeBonus": {"Crisis Management": 2, "Patience": 1}
+          },
+          "Press Secretary": {
+            "description": "The public face tasked with defending the indefensible with a straight face. Your daily briefings explaining presidential tweets are performance art that would impress Broadway.",
+            "attributeBonus": {"Spin": 2, "Media Savvy": 1}
+          },
+          "National Security Advisor": {
+            "description": "The strategy expert responsible for keeping America safe despite the Commander-in-Chief's tendency to make policy via Fox & Friends. You hide the nuclear football when necessary.",
+            "attributeBonus": {"Crisis Management": 2, "Cunning": 1}
+          },
+          "Family Member/Advisor": {
+            "description": "Related by blood or marriage, you've leveraged your personal relationship into nebulous but vast responsibilities. Constitutional norms and security clearances are just suggestions.",
+            "attributeBonus": {"Flattery": 2, "Cunning": 1}
+          },
+          "Cabinet Secretary": {
+            "description": "Department head attempting to implement actual policy while flying under the radar. Your goal is to avoid presidential attention, tweets, or random policy reversals in your domain.",
+            "attributeBonus": {"Cunning": 2, "Spin": 1}
+          }
+        }
+      },
+      "background": {
+        "description": "Choose your pre-White House background",
+        "content": {
+          "Business Executive": {
+            "description": "Former corporate leader from Trump's world of gold-plated capitalism. You speak his language of deals and ratings, though you're disturbed to learn government can't declare bankruptcy.",
+            "attributeBonus": {"Flattery": 2, "Crisis Management": 1}
+          },
+          "Political Operative": {
+            "description": "Career Washington insider who's survived multiple administrations. Your Rolodex is legendary, but you've never seen chaos like this and your antacid budget has tripled.",
+            "attributeBonus": {"Cunning": 2, "Spin": 1}
+          },
+          "Military Veteran": {
+            "description": "Disciplined former officer bringing structure to the White House. Your combat experience prepared you for danger but not for defending tweets about shark documentaries at 2AM.",
+            "attributeBonus": {"Patience": 2, "Crisis Management": 1}
+          },
+          "TV Personality": {
+            "description": "Media-savvy communicator who understands the President's true constituency is cable news. You know exactly which camera to look at while delivering talking points that border on fiction.",
+            "attributeBonus": {"Media Savvy": 2, "Spin": 1}
+          },
+          "Campaign Loyalist": {
+            "description": "True believer who's been there since the escalator ride. Your unwavering devotion has earned you a place in the inner circle, though your job description changes hourly.",
+            "attributeBonus": {"Loyalty Signaling": 2, "Patience": 1}
+          }
+        }
+      }
+    }
+  }
+}; 
