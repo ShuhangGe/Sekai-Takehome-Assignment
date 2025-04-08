@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { CustomStory, TraitOption } from '@/types/custom-story';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -75,24 +76,64 @@ Begin the game with the player's first day as an advisor, and guide them through
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, scenarioId, message, messageHistory = [] } = body;
+    const { 
+      action, 
+      scenarioId, 
+      message, 
+      messageHistory = [],
+      customStory,
+      characterTraits = {}
+    } = body;
 
-    // Validate scenario
-    if (!scenarios[scenarioId as string]) {
-      return NextResponse.json({ error: 'Invalid scenario ID' }, { status: 400 });
+    // Check if we're using a custom story or a built-in scenario
+    const isCustomStory = customStory && scenarioId.startsWith('custom-');
+    
+    // Get the appropriate scenario
+    let scenario: Scenario;
+    
+    if (isCustomStory) {
+      // For custom stories, create a scenario object from the custom story
+      scenario = {
+        title: customStory.title,
+        introduction: customStory.introduction,
+        systemPrompt: customStory.systemPrompt
+      };
+    } else {
+      // Validate built-in scenario
+      if (!scenarios[scenarioId as string]) {
+        return NextResponse.json({ error: 'Invalid scenario ID' }, { status: 400 });
+      }
+      
+      scenario = scenarios[scenarioId as string];
     }
-
-    const scenario = scenarios[scenarioId as string];
 
     // Handle different actions
     if (action === 'start') {
       // Starting a new game
+      let systemPrompt = scenario.systemPrompt;
+      
+      // If this is a custom story and has character traits selected,
+      // append them to the system prompt
+      if (isCustomStory && Object.keys(characterTraits).length > 0) {
+        systemPrompt += '\n\nPlayer character details:\n';
+        
+        for (const [traitKey, selectedOption] of Object.entries(characterTraits)) {
+          const trait = customStory.characterTraits[traitKey];
+          if (trait) {
+            const option = trait.options.find((opt: TraitOption) => opt.name === selectedOption);
+            if (option) {
+              systemPrompt += `\n${trait.name}: ${option.name} - ${option.effect}\n`;
+            }
+          }
+        }
+      }
+      
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
-            content: scenario.systemPrompt
+            content: systemPrompt
           },
           {
             role: "user",
@@ -117,10 +158,27 @@ export async function POST(request: NextRequest) {
       // We'll only keep the last 10 messages to prevent excessive token usage
       const recentMessages = messageHistory.slice(-10);
       
+      // Create the system prompt, adding character traits if applicable
+      let systemPrompt = scenario.systemPrompt;
+      
+      if (isCustomStory && Object.keys(characterTraits).length > 0) {
+        systemPrompt += '\n\nPlayer character details:\n';
+        
+        for (const [traitKey, selectedOption] of Object.entries(characterTraits)) {
+          const trait = customStory.characterTraits[traitKey];
+          if (trait) {
+            const option = trait.options.find((opt: TraitOption) => opt.name === selectedOption);
+            if (option) {
+              systemPrompt += `\n${trait.name}: ${option.name} - ${option.effect}\n`;
+            }
+          }
+        }
+      }
+      
       const apiMessages = [
         {
           role: "system",
-          content: scenario.systemPrompt
+          content: systemPrompt
         },
         ...recentMessages.map((msg: Message) => ({
           role: msg.role === 'assistant' ? 'assistant' : 'user',

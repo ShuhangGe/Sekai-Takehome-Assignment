@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { FaDiceD20 } from 'react-icons/fa';
+import { CustomStory } from '@/types/custom-story';
 
 interface Message {
   role: 'system' | 'user' | 'assistant';
@@ -11,10 +12,18 @@ interface Message {
 interface GameChatProps {
   scenarioId: string;
   scenarioTitle: string;
+  customStory?: CustomStory;
+  characterTraits?: Record<string, string>;
   onBack: () => void;
 }
 
-export default function GameChat({ scenarioId, scenarioTitle, onBack }: GameChatProps) {
+export default function GameChat({ 
+  scenarioId, 
+  scenarioTitle, 
+  customStory, 
+  characterTraits = {}, 
+  onBack 
+}: GameChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -32,15 +41,23 @@ export default function GameChat({ scenarioId, scenarioTitle, onBack }: GameChat
       if (!gameStarted) {
         setIsLoading(true);
         try {
+          const requestBody: any = {
+            action: 'start',
+            scenarioId: scenarioId
+          };
+
+          // If this is a custom story, include it and character traits
+          if (customStory) {
+            requestBody.customStory = customStory;
+            requestBody.characterTraits = characterTraits;
+          }
+
           const response = await fetch('/api/ai', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              action: 'start',
-              scenarioId: scenarioId
-            }),
+            body: JSON.stringify(requestBody),
           });
 
           if (!response.ok) {
@@ -66,7 +83,7 @@ export default function GameChat({ scenarioId, scenarioTitle, onBack }: GameChat
     };
 
     startGame();
-  }, [scenarioId, gameStarted]);
+  }, [scenarioId, gameStarted, customStory, characterTraits]);
 
   // Roll a D20 dice
   const rollDice = () => {
@@ -105,17 +122,25 @@ export default function GameChat({ scenarioId, scenarioTitle, onBack }: GameChat
     setIsLoading(true);
     
     try {
+      const requestBody: any = {
+        action: 'chat',
+        scenarioId: scenarioId,
+        message: userMessage,
+        messageHistory: messages.filter(m => m.role !== 'system')
+      };
+
+      // If this is a custom story, include it and character traits
+      if (customStory) {
+        requestBody.customStory = customStory;
+        requestBody.characterTraits = characterTraits;
+      }
+
       const response = await fetch('/api/ai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          action: 'chat',
-          scenarioId: scenarioId,
-          message: userMessage,
-          messageHistory: messages.filter(m => m.role !== 'system')
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {

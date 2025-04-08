@@ -6,8 +6,12 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { signOut } from '@/app/actions';
 import GameChat from '@/components/GameChat';
+import CustomStoryList from '@/components/CustomStoryList';
+import StoryEditor from '@/components/StoryEditor';
+import CharacterTraitsSelector from '@/components/CharacterTraitsSelector';
+import { CustomStory } from '@/types/custom-story';
 
-// Game scenarios data
+// Built-in game scenarios data
 const gameScenarios = [
   {
     id: 'asian-parent',
@@ -27,7 +31,9 @@ export default function GamePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
-  const [gameStage, setGameStage] = useState<'select' | 'play'>('select');
+  const [gameStage, setGameStage] = useState<'select' | 'custom-stories' | 'create-story' | 'edit-story' | 'customize-character' | 'play'>('select');
+  const [selectedCustomStory, setSelectedCustomStory] = useState<CustomStory | null>(null);
+  const [characterTraits, setCharacterTraits] = useState<Record<string, string>>({});
   const router = useRouter();
 
   // Check authentication state
@@ -59,6 +65,49 @@ export default function GamePage() {
 
   const handleBackToSelection = () => {
     setGameStage('select');
+    setSelectedScenario(null);
+    setSelectedCustomStory(null);
+  };
+
+  const handleViewCustomStories = () => {
+    setGameStage('custom-stories');
+  };
+
+  const handleCreateNewStory = () => {
+    setGameStage('create-story');
+    setSelectedCustomStory(null);
+  };
+
+  const handleEditStory = (story: CustomStory) => {
+    setSelectedCustomStory(story);
+    setGameStage('edit-story');
+  };
+
+  const handleStoryEditorSave = (savedStory: CustomStory) => {
+    setSelectedCustomStory(savedStory);
+    setGameStage('custom-stories');
+  };
+
+  const handleStoryEditorCancel = () => {
+    setGameStage('custom-stories');
+  };
+
+  const handleSelectCustomStory = (story: CustomStory) => {
+    setSelectedCustomStory(story);
+    
+    // If the story has character traits, go to customization
+    if (Object.keys(story.characterTraits).length > 0) {
+      setGameStage('customize-character');
+    } else {
+      // Otherwise, start the game immediately
+      setGameStage('play');
+      setCharacterTraits({});
+    }
+  };
+
+  const handleCharacterTraitsComplete = (selectedTraits: Record<string, string>) => {
+    setCharacterTraits(selectedTraits);
+    setGameStage('play');
   };
 
   const getScenarioTitle = (scenarioId: string) => {
@@ -100,6 +149,17 @@ export default function GamePage() {
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-center">Choose Your Adventure</h2>
             
+            <div className="flex justify-center mb-8">
+              <button
+                onClick={handleViewCustomStories}
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700"
+              >
+                Browse Custom Stories
+              </button>
+            </div>
+            
+            <h3 className="text-xl font-semibold mb-4 text-center">Or select from built-in scenarios:</h3>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {gameScenarios.map((scenario) => (
                 <div 
@@ -130,13 +190,82 @@ export default function GamePage() {
           </div>
         )}
 
-        {gameStage === 'play' && selectedScenario && (
+        {gameStage === 'custom-stories' && (
           <div className="max-w-4xl mx-auto">
-            <GameChat 
-              scenarioId={selectedScenario}
-              scenarioTitle={getScenarioTitle(selectedScenario)}
+            <CustomStoryList 
+              onSelectStory={handleSelectCustomStory}
+              onCreateNew={handleCreateNewStory}
+              onEditStory={handleEditStory}
               onBack={handleBackToSelection}
             />
+            
+            <div className="mt-6 text-center">
+              <button
+                onClick={handleBackToSelection}
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                Back to Scenario Selection
+              </button>
+            </div>
+          </div>
+        )}
+
+        {gameStage === 'create-story' && (
+          <div className="max-w-4xl mx-auto">
+            <StoryEditor 
+              onSave={handleStoryEditorSave}
+              onCancel={handleStoryEditorCancel}
+            />
+          </div>
+        )}
+
+        {gameStage === 'edit-story' && selectedCustomStory && (
+          <div className="max-w-4xl mx-auto">
+            <StoryEditor 
+              story={selectedCustomStory}
+              onSave={handleStoryEditorSave}
+              onCancel={handleStoryEditorCancel}
+            />
+          </div>
+        )}
+
+        {gameStage === 'customize-character' && selectedCustomStory && (
+          <div className="max-w-4xl mx-auto">
+            <CharacterTraitsSelector 
+              story={selectedCustomStory}
+              onComplete={handleCharacterTraitsComplete}
+              onBack={() => setGameStage('custom-stories')}
+            />
+          </div>
+        )}
+
+        {gameStage === 'play' && (
+          <div className="max-w-4xl mx-auto">
+            {selectedCustomStory ? (
+              <GameChat 
+                scenarioId={`custom-${selectedCustomStory.id}`}
+                scenarioTitle={selectedCustomStory.title}
+                customStory={selectedCustomStory}
+                characterTraits={characterTraits}
+                onBack={handleBackToSelection}
+              />
+            ) : selectedScenario ? (
+              <GameChat 
+                scenarioId={selectedScenario}
+                scenarioTitle={getScenarioTitle(selectedScenario)}
+                onBack={handleBackToSelection}
+              />
+            ) : (
+              <div className="text-center">
+                <p className="text-red-500">No scenario selected</p>
+                <button
+                  onClick={handleBackToSelection}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md"
+                >
+                  Back to Selection
+                </button>
+              </div>
+            )}
           </div>
         )}
       </main>
